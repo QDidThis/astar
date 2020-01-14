@@ -1,11 +1,16 @@
+import random
 class BinomialTree:
-	def __init__(self, value, comp):
+	def __init__(self, value, comp,eq):
 		self.children 	= []
 		self.value		= value
 		self.comp		= comp
+		self.eq			= eq
 
 	def __lt__(self, tree):
 		return self.comp(self.value, tree.value)
+	
+	def __eq__(self,tree):
+		return self.eq(self.value,tree.value)
 
 	def __len__(self):
 		return len(self.children)
@@ -36,10 +41,11 @@ class BinomialHeap:
 	'''
 	comp: comparator function on the elements contained in the Heap
 	'''
-	def __init__(self, comp, trees=[]):
+	def __init__(self, comp, eq, trees=[]):
 		self.trees 	= trees
 		self.min 	= None
 		self.comp	= comp
+		self.eq		= eq
 	
 	def __len__(self):
 		return len(self.trees)
@@ -98,7 +104,7 @@ class BinomialHeap:
 		return self
 
 	def insert(self, value):
-		return self.merge(BinomialHeap(self.comp,[BinomialTree(value,self.comp)]))
+		return self.merge(BinomialHeap(self.comp,self.eq,[BinomialTree(value,self.comp,self.eq)]))
 	
 	def peek(self):
 		if len(self.trees) == 0:
@@ -121,20 +127,23 @@ class BinomialHeap:
 		if len(self.trees) == 0:
 			return None
 		min = None
-		min_index = 0
+		mins = []
 		for i,tree in enumerate(self.trees):
 			if min is None and tree is None:
 				continue
 			elif min is None:
 				min = tree
-				min_index = i
+				mins.append((tree,i))
 			elif tree is None:
 				continue
+			elif tree == min:
+				mins.append((tree,i))
 			elif tree < min:
 				min = tree
-				min_index = i
+				mins = [(tree,i)]
 		if min is None:
 			self.trees = []
 			return min,self
+		min,min_index = random.choice(mins)
 		self.trees[min_index] = None
-		return min.value,self.merge(BinomialHeap(self.comp,min.children))
+		return min.value,self.merge(BinomialHeap(self.comp,self.eq,min.children))

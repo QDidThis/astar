@@ -1,1 +1,3 @@
 anenv
+*.pyc
+*.swp

@@ -1,19 +1,21 @@
-import priorityqueue as queue
+import astar.priorityqueue as queue
 
 
 class AStar:
 	def __init__(self,start,goal,graph,heuristic):
-		# Graph is a 2d array, -1 is blocked, 0 is unvisited, 1 is visited, 2 is done
+		# Graph is a 2d array, -1 is blocked, 0 is unvisited, 1 is visited, 2 is done, 3 is done, 4 is start and goal
 		self.graph 	= graph
 		self.h 		= heuristic
 		# Nodes will be represented as x,y,cost,prev in the queue
-		self.queue	= queue.PriorityQueue(lambda x,y: x[2]+self.h((x[0],x[1]),goal) < y[2]+self.h((y[0],y[1]),goal))
+		self.queue	= queue.PriorityQueue(lambda x,y: x[2]+self.h((x[0],x[1]),goal) < y[2]+self.h((y[0],y[1]),goal),lambda x,y: x[2]+self.h((x[0],x[1]),goal) == y[2]+self.h((y[0],y[1]),goal))
 		self.prev = {start:None}
 		self.goal = goal
 		self.done = False
+		self.start = start
 		self.current = *start,0,None
 		x,y = start
-		self.graph[x][y] = 2
+		self.graph[x][y] = 4
+		self.graph[goal[0]][goal[1]] = 4
 
 	def step(self):
 		if self.current[0] == self.goal[0] and self.current[1] == self.goal[1]:
@@ -36,6 +38,9 @@ class AStar:
 			self.queue.enqueue((nx,ny,c+1,(x,y)))
 		next = self.queue.dequeue()
 		while not next is None and self.graph[next[0]][next[1]] == 2:
+			if next[0] == self.goal[0] and next[1] == self.goal[1]:
+				self.done = True
+				return
 			next = self.queue.dequeue()
 		if next is None:
 			raise RuntimeError('No Path Found')
@@ -48,7 +53,11 @@ class AStar:
 			raise RuntimeError('Not done')
 		curr = self.goal
 		path = [curr]
-		while not self.prev[curr] is None:
+		while not self.prev[curr] is None and not (curr[0] == self.start[0] and curr[1] == self.start[1]):
 			path.append(self.prev[curr])
+			self.graph[curr[0]][curr[1]] = 3
 			curr = self.prev[curr]
+		self.graph[self.start[0]][self.start[1]] = 3
+		if not curr is None:
+			path.append(curr) 
 		return list(reversed(path))
